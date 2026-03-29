@@ -1,0 +1,150 @@
+import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
+  @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final _phoneOrEmail = TextEditingController();
+  final _otp = TextEditingController();
+  final _newPassword = TextEditingController();
+  bool _otpSent = false;
+  bool _otpVerified = false;
+
+  void _sendOtp() async {
+    try {
+      await ApiService.post(
+        '/auth/request-password-reset',
+        body: {'university_email': _phoneOrEmail.text.trim()},
+        auth: false,
+      );
+      setState(() => _otpSent = true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('OTP sent')));
+    } on ApiException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+    } catch (_) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Connection error')));
+    }
+  }
+
+  void _verifyOtp() async {
+    try {
+      await ApiService.post(
+        '/auth/verify-otp',
+        body: {
+          'phone_or_email': _phoneOrEmail.text.trim(),
+          'otp_code': _otp.text.trim(),
+        },
+        auth: false,
+      );
+      setState(() => _otpVerified = true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('OTP verified')));
+    } on ApiException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+    } catch (_) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Connection error')));
+    }
+  }
+
+  void _resetPassword() async {
+    try {
+      await ApiService.post(
+        '/auth/reset-password',
+        body: {
+          'university_email': _phoneOrEmail.text.trim(),
+          'otp_code': _otp.text.trim(),
+          'new_password': _newPassword.text,
+        },
+        auth: false,
+      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Password reset')));
+      Navigator.pop(context);
+    } on ApiException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+    } catch (_) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Connection error')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Forgot Password')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: _phoneOrEmail,
+                enabled: !_otpSent,
+                decoration: const InputDecoration(labelText: 'Email or phone'),
+              ),
+              const SizedBox(height: 8),
+              if (!_otpSent)
+                ElevatedButton(
+                  onPressed: _sendOtp,
+                  child: const Text('Send OTP'),
+                )
+              else
+                Column(
+                  children: [
+                    TextField(
+                      controller: _otp,
+                      enabled: !_otpVerified,
+                      decoration: const InputDecoration(labelText: 'OTP'),
+                    ),
+                    const SizedBox(height: 8),
+                    if (!_otpVerified)
+                      ElevatedButton(
+                        onPressed: _verifyOtp,
+                        child: const Text('Verify OTP'),
+                      )
+                    else
+                      Column(
+                        children: [
+                          TextField(
+                            controller: _newPassword,
+                            obscureText: true,
+                            decoration: const InputDecoration(
+                              labelText: 'New password',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ElevatedButton(
+                            onPressed: _resetPassword,
+                            child: const Text('Reset Password'),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
