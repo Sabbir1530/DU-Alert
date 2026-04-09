@@ -1,0 +1,14 @@
+const router = require('express').Router();
+const authenticate = require('../middleware/auth');
+const roleGuard = require('../middleware/roleGuard');
+const upload = require('../middleware/upload');
+const { publicAlertRules, handleValidation } = require('../middleware/validate');
+const ctrl = require('../controllers/publicAlertController');
+
+router.post('/', authenticate, upload.array('media', 5), publicAlertRules, handleValidation, ctrl.createPublicAlert);
+router.get('/feed', ctrl.getApprovedAlerts);
+router.get('/my', authenticate, ctrl.getMyAlerts);
+router.get('/', authenticate, roleGuard('admin', 'proctor'), ctrl.getAllAlerts);
+router.patch('/:id/review', authenticate, roleGuard('admin'), ctrl.reviewAlert);
+
+module.exports = router;
