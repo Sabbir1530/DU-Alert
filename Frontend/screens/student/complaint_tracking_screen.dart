@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/complaint_provider.dart';
 import '../../models/complaint.dart';
-import '../../widgets/status_timeline.dart';
+import '../complaint/complaint_details_screen.dart';
 
 class ComplaintTrackingScreen extends StatefulWidget {
   const ComplaintTrackingScreen({super.key});
@@ -44,39 +44,59 @@ class _ComplaintCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subtitleDescription = complaint.description
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ExpansionTile(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         leading: _statusIcon(complaint.status),
         title: Text(
-          complaint.category,
+          complaint.title.isNotEmpty ? complaint.title : complaint.category,
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        subtitle: Text(
-          'Status: ${complaint.status}',
-          style: TextStyle(
-            color: _statusColor(complaint.status),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(complaint.description),
-                const SizedBox(height: 16),
-                const Text(
-                  'Status Timeline',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                StatusTimeline(statusLog: complaint.statusLog),
-              ],
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              'Status: ${complaint.status}',
+              style: TextStyle(
+                color: _statusColor(complaint.status),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              subtitleDescription,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (complaint.media.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${complaint.media.length} attachment(s)',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          final provider = context.read<ComplaintProvider>();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ComplaintDetailsScreen(
+                complaintId: complaint.id,
+                initialComplaint: complaint,
+              ),
+            ),
+          ).then((_) => provider.fetchMy());
+        },
       ),
     );
   }

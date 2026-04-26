@@ -33,6 +33,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _SummaryRow(data: data),
+                  const SizedBox(height: 12),
+                  _ComplaintLifecycleRow(data: data),
                   const SizedBox(height: 20),
                   _SectionTitle('Complaints by Category'),
                   _BarList(
@@ -107,6 +109,94 @@ class _SummaryRow extends StatelessWidget {
           color: Colors.red,
         ),
       ],
+    );
+  }
+}
+
+class _ComplaintLifecycleRow extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _ComplaintLifecycleRow({required this.data});
+
+  int _toInt(dynamic value) => int.tryParse('${value ?? 0}') ?? 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = (data['complaintSummary'] as Map?) ?? const {};
+    final resolved = _toInt(summary['resolved']);
+    final inProgress = _toInt(summary['inProgress']);
+    final received = _toInt(summary['received']);
+    final total = _toInt(summary['total']);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle('Complaint Summary'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _MiniStatCard(
+              label: 'Resolved',
+              value: '$resolved',
+              color: Colors.teal,
+            ),
+            _MiniStatCard(
+              label: 'In Progress',
+              value: '$inProgress',
+              color: Colors.blue,
+            ),
+            _MiniStatCard(
+              label: 'Received',
+              value: '$received',
+              color: Colors.amber.shade800,
+            ),
+            _MiniStatCard(
+              label: 'Total',
+              value: '$total',
+              color: Colors.deepOrange,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MiniStatCard({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 160,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

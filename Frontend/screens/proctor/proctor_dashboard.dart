@@ -4,8 +4,11 @@ import '../../providers/auth_provider.dart';
 import '../../config/theme.dart';
 import '../auth/login_screen.dart';
 import '../student/notifications_screen.dart';
+import '../student/public_alert_feed_screen.dart';
 import 'emergency_alerts_screen.dart';
 import 'complaints_management_screen.dart';
+import '../admin/approve_alerts_screen.dart';
+import '../admin/analytics_screen.dart';
 
 class ProctorDashboard extends StatelessWidget {
   const ProctorDashboard({super.key});
@@ -13,9 +16,10 @@ class ProctorDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Proctor Dashboard'),
+        title: const Text('Proctorial Body Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -56,6 +60,28 @@ class ProctorDashboard extends StatelessWidget {
               crossAxisSpacing: 12,
               children: [
                 _Card(
+                  icon: Icons.assignment,
+                  label: 'Complaints Review',
+                  color: Colors.blue,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ComplaintsManagementScreen(),
+                    ),
+                  ),
+                ),
+                _Card(
+                  icon: Icons.verified,
+                  label: 'Public Alerts Review',
+                  color: Colors.orange,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ApproveAlertsScreen(),
+                    ),
+                  ),
+                ),
+                _Card(
                   icon: Icons.emergency,
                   label: 'Emergency Alerts',
                   color: AppTheme.danger,
@@ -67,13 +93,33 @@ class ProctorDashboard extends StatelessWidget {
                   ),
                 ),
                 _Card(
-                  icon: Icons.assignment,
-                  label: 'Complaints',
-                  color: Colors.blue,
+                  icon: Icons.notifications_active,
+                  label: 'Notifications',
+                  color: Colors.teal,
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const ComplaintsManagementScreen(),
+                      builder: (_) => const NotificationsScreen(),
+                    ),
+                  ),
+                ),
+                _Card(
+                  icon: Icons.analytics,
+                  label: 'Reports / Analytics',
+                  color: AppTheme.duGreen,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AnalyticsScreen()),
+                  ),
+                ),
+                _Card(
+                  icon: Icons.campaign,
+                  label: 'Public Alert Feed',
+                  color: Colors.purple,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PublicAlertFeedScreen(),
                     ),
                   ),
                 ),

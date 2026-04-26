@@ -83,11 +83,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 16),
               Autocomplete<String>(
                 optionsBuilder: (textEditingValue) {
-                  if (textEditingValue.text.isEmpty) return const [];
+                  if (auth.departments.isEmpty) {
+                    return const Iterable<String>.empty();
+                  }
+
+                  final query = textEditingValue.text.trim().toLowerCase();
+                  if (query.isEmpty) {
+                    return auth.departments;
+                  }
+
                   return auth.departments.where(
-                    (d) => d.toLowerCase().contains(
-                      textEditingValue.text.toLowerCase(),
-                    ),
+                    (d) => d.toLowerCase().contains(query),
                   );
                 },
                 onSelected: (v) => _deptCtrl.text = v,
@@ -99,10 +105,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Department',
                           prefixIcon: Icon(Icons.school),
+                          helperText:
+                              'Start typing to see department suggestions',
                         ),
                         onChanged: (v) => _deptCtrl.text = v,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Enter department' : null,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Enter department';
+                          if (auth.departments.isNotEmpty &&
+                              !auth.departments.any(
+                                (d) =>
+                                    d.toLowerCase() == v.trim().toLowerCase(),
+                              )) {
+                            return 'Select a department from suggestions';
+                          }
+                          return null;
+                        },
                       );
                     },
               ),

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,24 +13,24 @@ class ReportIncidentScreen extends StatefulWidget {
 
 class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   String? _category;
   final List<Map<String, String>> _complainants = [{}];
   final List<Map<String, String>> _accused = [];
-  final List<File> _mediaFiles = [];
+  final List<XFile> _mediaFiles = [];
   final _picker = ImagePicker();
 
   @override
   void dispose() {
+    _titleCtrl.dispose();
     _descCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _pickMedia() async {
     final files = await _picker.pickMultiImage();
-    for (final xf in files) {
-      _mediaFiles.add(File(xf.path));
-    }
+    _mediaFiles.addAll(files);
     setState(() {});
   }
 
@@ -50,6 +49,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
 
     final cp = context.read<ComplaintProvider>();
     final ok = await cp.createComplaint(
+      title: _titleCtrl.text.trim(),
       category: _category!,
       description: _descCtrl.text.trim(),
       complainants: validComplainants.isEmpty ? null : validComplainants,
@@ -83,13 +83,26 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
             children: [
               // Category
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: AppConstants.complaintCategories
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
                 onChanged: (v) => setState(() => _category = v),
                 validator: (v) => v == null ? 'Select a category' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              TextFormField(
+                controller: _titleCtrl,
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (v) {
+                  final value = (v ?? '').trim();
+                  if (value.isEmpty) return 'Enter a title';
+                  if (value.length < 3) return 'Title is too short';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 
@@ -213,42 +226,17 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                 label: Text('Attach Media (${_mediaFiles.length} selected)'),
               ),
               if (_mediaFiles.isNotEmpty)
-                SizedBox(
-                  height: 80,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _mediaFiles.length,
-                    itemBuilder: (_, i) => Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Stack(
-                        children: [
-                          Image.file(
-                            _mediaFiles[i],
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
-                          ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _mediaFiles.removeAt(i)),
-                              child: const CircleAvatar(
-                                radius: 10,
-                                backgroundColor: Colors.red,
-                                child: Icon(
-                                  Icons.close,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _mediaFiles.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final f = entry.value;
+                    return Chip(
+                      label: Text(f.name),
+                      onDeleted: () => setState(() => _mediaFiles.removeAt(i)),
+                    );
+                  }).toList(),
                 ),
               const SizedBox(height: 24),
 

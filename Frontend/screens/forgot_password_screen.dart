@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/api_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -9,7 +10,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _phoneOrEmail = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _otp = TextEditingController();
   final _newPassword = TextEditingController();
   bool _otpSent = false;
@@ -19,18 +20,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     try {
       await ApiService.post(
         '/auth/request-password-reset',
-        body: {'university_email': _phoneOrEmail.text.trim()},
+        body: {'university_email': _emailCtrl.text.trim()},
         auth: false,
       );
+      if (!mounted) return;
       setState(() => _otpSent = true);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('OTP sent')));
     } on ApiException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
     } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Connection error')));
@@ -38,24 +42,34 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _verifyOtp() async {
+    if (_otp.text.trim().length != 6) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('OTP must be 6 digits')));
+      return;
+    }
+
     try {
       await ApiService.post(
         '/auth/verify-otp',
         body: {
-          'phone_or_email': _phoneOrEmail.text.trim(),
+          'phone_or_email': _emailCtrl.text.trim(),
           'otp_code': _otp.text.trim(),
         },
         auth: false,
       );
+      if (!mounted) return;
       setState(() => _otpVerified = true);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('OTP verified')));
     } on ApiException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
     } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Connection error')));
@@ -67,21 +81,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await ApiService.post(
         '/auth/reset-password',
         body: {
-          'university_email': _phoneOrEmail.text.trim(),
+          'university_email': _emailCtrl.text.trim(),
           'otp_code': _otp.text.trim(),
           'new_password': _newPassword.text,
         },
         auth: false,
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Password reset')));
       Navigator.pop(context);
     } on ApiException catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
     } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Connection error')));
@@ -98,9 +115,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             children: [
               TextField(
-                controller: _phoneOrEmail,
+                controller: _emailCtrl,
                 enabled: !_otpSent,
-                decoration: const InputDecoration(labelText: 'Email or phone'),
+                decoration: const InputDecoration(
+                  labelText: 'University Email',
+                ),
               ),
               const SizedBox(height: 8),
               if (!_otpSent)
@@ -114,7 +133,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     TextField(
                       controller: _otp,
                       enabled: !_otpVerified,
-                      decoration: const InputDecoration(labelText: 'OTP'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: 'OTP (6 digits)',
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (!_otpVerified)

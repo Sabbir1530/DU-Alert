@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text(
                   'Campus Safety Platform',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary),
+                 style: TextStyle(color: AppTheme.textSecondary),
                 ),
                 const SizedBox(height: 48),
                 TextFormField(

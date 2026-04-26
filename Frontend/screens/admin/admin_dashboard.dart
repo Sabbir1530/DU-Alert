@@ -7,6 +7,8 @@ import '../student/notifications_screen.dart';
 import 'manage_users_screen.dart';
 import 'approve_alerts_screen.dart';
 import 'analytics_screen.dart';
+import '../proctor/complaints_management_screen.dart';
+import '../student/public_alert_feed_screen.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -95,6 +97,28 @@ class AdminDashboard extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const NotificationsScreen(),
+                    ),
+                  ),
+                ),
+                _Card(
+                  icon: Icons.assignment,
+                  label: 'Complaints',
+                  color: Colors.teal,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ComplaintsManagementScreen(),
+                    ),
+                  ),
+                ),
+                _Card(
+                  icon: Icons.campaign,
+                  label: 'Public Alerts Feed',
+                  color: Colors.deepPurple,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PublicAlertFeedScreen(),
                     ),
                   ),
                 ),

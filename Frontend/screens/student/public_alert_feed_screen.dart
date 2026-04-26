@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/public_alert_provider.dart';
 import '../../models/public_alert.dart';
-import '../../config/theme.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/public_alert_provider.dart';
+import '../../widgets/alert_card.dart';
 
 class PublicAlertFeedScreen extends StatefulWidget {
   const PublicAlertFeedScreen({super.key});
@@ -12,45 +13,121 @@ class PublicAlertFeedScreen extends StatefulWidget {
 }
 
 class _PublicAlertFeedScreenState extends State<PublicAlertFeedScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    context.read<PublicAlertProvider>().fetchFeed();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<PublicAlertProvider>().fetchFeed(refresh: true);
+    });
+
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final threshold = _scrollController.position.maxScrollExtent - 280;
+      if (_scrollController.position.pixels >= threshold) {
+        context.read<PublicAlertProvider>().fetchMoreFeed();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final pa = context.watch<PublicAlertProvider>();
+    final alertsProvider = context.watch<PublicAlertProvider>();
+    final auth = context.watch<AuthProvider>();
+
+    final hasInitialLoading = alertsProvider.loading && alertsProvider.feed.isEmpty;
+    final hasError = (alertsProvider.error ?? '').isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Public Safety Alerts')),
-      body: pa.loading
-          ? const Center(child: CircularProgressIndicator())
-          : pa.feed.isEmpty
-          ? const Center(child: Text('No alerts yet'))
+      body: hasInitialLoading
+          ? const _FeedSkeletonList()
+          : alertsProvider.feed.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(hasError ? alertsProvider.error! : 'No approved alerts yet'),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () => alertsProvider.fetchFeed(refresh: true),
+                    child: const Text('Reload'),
+                  ),
+                ],
+              ),
+            )
           : RefreshIndicator(
-              onRefresh: () => pa.fetchFeed(),
+              onRefresh: () => alertsProvider.fetchFeed(refresh: true),
               child: ListView.builder(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(12),
-                itemCount: pa.feed.length,
-                itemBuilder: (_, i) => _AlertCard(alert: pa.feed[i]),
+                itemCount: alertsProvider.feed.length +
+                    (alertsProvider.feedLoadingMore ? 1 : 0),
+                itemBuilder: (_, index) {
+                  if (index >= alertsProvider.feed.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  final alert = alertsProvider.feed[index];
+                  return AlertCard(
+                    alert: alert,
+                    currentUserId: auth.user?.id,
+                    onReact: (type) => alertsProvider.reactToAlert(alert.id, type),
+                    onRemoveReaction: () => alertsProvider.removeReaction(alert.id),
+                    onAddComment: (text) =>
+                        alertsProvider.addCommentToAlert(alert.id, text),
+                    onDeleteComment: (commentId) => alertsProvider.deleteComment(
+                      alertId: alert.id,
+                      commentId: commentId,
+                    ),
+                    onLoadComments: () => _loadCommentsForAlert(
+                      alertsProvider,
+                      alert,
+                    ),
+                  );
+                },
               ),
             ),
     );
   }
+
+  Future<List<PublicAlertComment>> _loadCommentsForAlert(
+    PublicAlertProvider provider,
+    PublicAlert alert,
+  ) async {
+    final comments = await provider.fetchComments(alert.id, page: 1, limit: 50);
+    return comments;
+  }
 }
 
-class _AlertCard extends StatelessWidget {
-  final PublicAlert alert;
-  const _AlertCard({required this.alert});
+class _FeedSkeletonList extends StatelessWidget {
+  const _FeedSkeletonList();
 
-  @override
-  Widget build(BuildContext context) {
-    final creator = alert.anonymous || alert.creator == null
-        ? 'Anonymous'
-        : alert.creator!['full_name'] ?? 'Unknown';
+  Widget _line(double width) {
+    return Container(
+      width: width,
+      height: 10,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(999),
+      ),
+    );
+  }
 
+  Widget _card() {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -59,55 +136,51 @@ class _AlertCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: AppTheme.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    alert.category,
-                    style: TextStyle(
-                      color: AppTheme.accent,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    color: Colors.grey.shade300,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  alert.createdAt.split('T').first,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _line(120),
+                    const SizedBox(height: 8),
+                    _line(80),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(alert.description, style: const TextStyle(fontSize: 15)),
+            const SizedBox(height: 16),
+            _line(double.infinity),
             const SizedBox(height: 8),
-            Text(
-              'Posted by: $creator',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
+            _line(double.infinity),
+            const SizedBox(height: 8),
+            _line(220),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              height: 170,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            if (alert.media.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    const Icon(Icons.attach_file, size: 16),
-                    Text('${alert.media.length} attachment(s)'),
-                  ],
-                ),
-              ),
           ],
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: 4,
+      itemBuilder: (_, _) => _card(),
     );
   }
 }
