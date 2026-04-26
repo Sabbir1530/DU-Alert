@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const AlertMedia = sequelize.define('AlertMedia', {
+const PublicAlertComment = sequelize.define('PublicAlertComment', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -12,18 +12,20 @@ const AlertMedia = sequelize.define('AlertMedia', {
     allowNull: false,
     references: { model: 'public_alerts', key: 'id' },
   },
-  file_url: {
-    type: DataTypes.STRING(500),
+  user_id: {
+    type: DataTypes.UUID,
     allowNull: false,
+    references: { model: 'users', key: 'id' },
   },
-  file_type: {
-    type: DataTypes.ENUM('image', 'video', 'pdf', 'file'),
+  content: {
+    type: DataTypes.TEXT,
     allowNull: false,
-    defaultValue: 'file',
   },
 }, {
-  tableName: 'alert_media',
-  timestamps: false,
+  tableName: 'public_alert_comments',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: false,
 });
 
-module.exports = AlertMedia;
+module.exports = PublicAlertComment;

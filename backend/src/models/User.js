@@ -30,6 +30,10 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(20),
     allowNull: false,
   },
+  profile_image_url: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+  },
   username: {
     type: DataTypes.STRING(50),
     allowNull: false,

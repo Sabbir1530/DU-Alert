@@ -7,6 +7,11 @@ const PublicAlert = sequelize.define('PublicAlert', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  title: {
+    type: DataTypes.STRING(200),
+    allowNull: false,
+    defaultValue: 'Campus Safety Alert',
+  },
   category: {
     type: DataTypes.STRING(80),
     allowNull: false,
@@ -27,6 +32,15 @@ const PublicAlert = sequelize.define('PublicAlert', {
   approval_status: {
     type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
     defaultValue: 'Pending',
+  },
+  rejection_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  visibility: {
+    type: DataTypes.ENUM('PUBLIC', 'PRIVATE'),
+    allowNull: false,
+    defaultValue: 'PUBLIC',
   },
 }, {
   tableName: 'public_alerts',

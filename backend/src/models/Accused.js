@@ -30,4 +30,3 @@ const Accused = sequelize.define('Accused', {
 });
 
 module.exports = Accused;
-

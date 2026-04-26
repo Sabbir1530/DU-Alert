@@ -25,6 +25,27 @@ const EmergencyAlert = sequelize.define('EmergencyAlert', {
     allowNull: true,
     references: { model: 'users', key: 'id' },
   },
+  acknowledged_by_user_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: { model: 'users', key: 'id' },
+  },
+  acknowledged_by_name: {
+    type: DataTypes.STRING(120),
+    allowNull: true,
+  },
+  acknowledged_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  responder_location: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
+  distance_in_km: {
+    type: DataTypes.DECIMAL(8, 3),
+    allowNull: true,
+  },
   status: {
     type: DataTypes.ENUM('active', 'acknowledged', 'resolved'),
     defaultValue: 'active',

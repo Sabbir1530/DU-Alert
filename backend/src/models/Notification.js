@@ -7,6 +7,15 @@ const Notification = sequelize.define('Notification', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  user_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: { model: 'users', key: 'id' },
+  },
+  type: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+  },
   title: {
     type: DataTypes.STRING(200),
     allowNull: false,
@@ -15,9 +24,26 @@ const Notification = sequelize.define('Notification', {
     type: DataTypes.TEXT,
     allowNull: false,
   },
-  target_role: {
-    type: DataTypes.ENUM('student', 'proctor', 'admin', 'all'),
-    defaultValue: 'all',
+  reference_type: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+  },
+  reference_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  reference_sub_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
+  is_read: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  data: {
+    type: DataTypes.JSONB,
+    allowNull: true,
   },
 }, {
   tableName: 'notifications',

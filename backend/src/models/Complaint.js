@@ -19,6 +19,11 @@ const Complaint = sequelize.define('Complaint', {
     ),
     allowNull: false,
   },
+  title: {
+    type: DataTypes.STRING(200),
+    allowNull: false,
+    defaultValue: 'Untitled Complaint',
+  },
   description: {
     type: DataTypes.TEXT,
     allowNull: false,
@@ -26,6 +31,22 @@ const Complaint = sequelize.define('Complaint', {
   status: {
     type: DataTypes.ENUM('Received', 'In Progress', 'Resolved'),
     defaultValue: 'Received',
+  },
+  judgement_details: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  summary: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  summarized_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  summary_source_hash: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
   },
   created_by: {
     type: DataTypes.UUID,
