@@ -1,8 +1,12 @@
 class Complaint {
   final String id;
   final String category;
+  final String title;
   final String description;
   final String status;
+  final String? judgementDetails;
+  final String? summary;
+  final String? summarizedAt;
   final String createdBy;
   final String createdAt;
   final String updatedAt;
@@ -15,8 +19,12 @@ class Complaint {
   Complaint({
     required this.id,
     required this.category,
+    required this.title,
     required this.description,
     required this.status,
+    this.judgementDetails,
+    this.summary,
+    this.summarizedAt,
     required this.createdBy,
     required this.createdAt,
     required this.updatedAt,
@@ -31,8 +39,12 @@ class Complaint {
     return Complaint(
       id: json['id'],
       category: json['category'] ?? '',
+      title: json['title'] ?? '',
       description: json['description'] ?? '',
       status: json['status'] ?? 'Received',
+      judgementDetails: json['judgement_details'],
+      summary: json['summary'],
+      summarizedAt: json['summarized_at'],
       createdBy: json['created_by'] ?? '',
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',

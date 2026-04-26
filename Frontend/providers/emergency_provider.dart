@@ -41,12 +41,15 @@ class EmergencyProvider extends ChangeNotifier {
 
   Future<void> fetchAll({String? status}) async {
     _setLoading(true);
+    _error = null;
     try {
       final path = status != null ? '/emergency?status=$status' : '/emergency';
       final res = await ApiService.get(path);
       _alerts = (res['alerts'] as List)
           .map((j) => EmergencyAlert.fromJson(j))
           .toList();
+    } on ApiException catch (e) {
+      _error = e.message;
     } catch (e) {
       _error = e.toString();
     }
@@ -55,22 +58,57 @@ class EmergencyProvider extends ChangeNotifier {
 
   Future<void> fetchMy() async {
     _setLoading(true);
+    _error = null;
     try {
       final res = await ApiService.get('/emergency/my');
       _myAlerts = (res['alerts'] as List)
           .map((j) => EmergencyAlert.fromJson(j))
           .toList();
+    } on ApiException catch (e) {
+      _error = e.message;
     } catch (e) {
       _error = e.toString();
     }
     _setLoading(false);
   }
 
-  Future<bool> updateStatus(String id, String status) async {
+  Future<EmergencyAlert?> fetchById(String id) async {
     try {
-      await ApiService.patch('/emergency/$id', body: {'status': status});
+      final res = await ApiService.get('/emergency/$id');
+      return EmergencyAlert.fromJson(res['alert'] as Map<String, dynamic>);
+    } on ApiException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<bool> updateStatus(
+    String id,
+    String status, {
+    double? responderLatitude,
+    double? responderLongitude,
+  }) async {
+    try {
+      final body = <String, dynamic>{'status': status};
+      if (responderLatitude != null) {
+        body['responder_latitude'] = responderLatitude;
+      }
+      if (responderLongitude != null) {
+        body['responder_longitude'] = responderLongitude;
+      }
+
+      await ApiService.patch('/emergency/$id', body: body);
       await fetchAll();
       return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      notifyListeners();
+      return false;
     } catch (e) {
       _error = e.toString();
       notifyListeners();

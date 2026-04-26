@@ -20,10 +20,13 @@ class AdminProvider extends ChangeNotifier {
 
   Future<void> fetchUsers({String? role}) async {
     _setLoading(true);
+    _error = null;
     try {
       final path = role != null ? '/admin/users?role=$role' : '/admin/users';
       final res = await ApiService.get(path);
       _users = (res['users'] as List).map((j) => User.fromJson(j)).toList();
+    } on ApiException catch (e) {
+      _error = e.message;
     } catch (e) {
       _error = e.toString();
     }
@@ -50,6 +53,7 @@ class AdminProvider extends ChangeNotifier {
           'password': password,
         },
       );
+      await fetchUsers();
       _setLoading(false);
       return true;
     } on ApiException catch (e) {

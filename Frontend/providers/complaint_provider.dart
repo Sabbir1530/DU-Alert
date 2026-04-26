@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/complaint.dart';
 import '../services/api_service.dart';
 
@@ -23,16 +23,18 @@ class ComplaintProvider extends ChangeNotifier {
   }
 
   Future<bool> createComplaint({
+    required String title,
     required String category,
     required String description,
     List<Map<String, String>>? complainants,
     List<Map<String, String>>? accused,
-    List<File>? mediaFiles,
+    List<XFile>? mediaFiles,
   }) async {
     _setLoading(true);
     _error = null;
     try {
       final fields = <String, String>{
+        'title': title,
         'category': category,
         'description': description,
       };
@@ -106,18 +108,51 @@ class ComplaintProvider extends ChangeNotifier {
     _setLoading(false);
   }
 
-  Future<bool> updateStatus(String id, String status) async {
+  Future<bool> updateStatus(
+    String id,
+    String status, {
+    String? judgementDetails,
+  }) async {
     try {
-      await ApiService.patch(
-        '/complaints/$id/status',
-        body: {'status': status},
-      );
+      final body = <String, dynamic>{'status': status};
+      if (judgementDetails != null) {
+        body['judgement_details'] = judgementDetails;
+      }
+
+      await ApiService.patch('/complaints/$id/status', body: body);
       await fetchAll();
       return true;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> generateSummary(
+    String id, {
+    bool regenerate = false,
+  }) async {
+    try {
+      final suffix = regenerate ? '?regenerate=true' : '';
+      final res = await ApiService.post(
+        '/api/complaints/$id/summary$suffix',
+        body: {},
+      );
+      return {
+        'summary': res['summary'] ?? '',
+        'cached': res['cached'] ?? false,
+        'generatedAt': res['generatedAt'],
+        'error': null,
+      };
+    } on ApiException catch (e) {
+      throw Exception(
+        e.message.isNotEmpty
+            ? e.message
+            : 'AI summary service unavailable. Please try again.',
+      );
+    } catch (e) {
+      throw Exception('AI summary service unavailable. Please try again.');
     }
   }
 }
