@@ -6,8 +6,8 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = Number(process.env.DB_PORT || 5432);
 const DB_USER = process.env.DB_USER;
-const DB_PASSWORD = process.env.DB_PASSWORD || process.env.DB_PASS;
-const DB_NAME = process.env.DB_NAME || 'dualert';
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_NAME = process.env.DB_NAME || 'dualertdb';
 const POSTGRES_DB = process.env.POSTGRES_DB || 'postgres';
 
 if (!DB_USER) {
